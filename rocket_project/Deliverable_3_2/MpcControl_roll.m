@@ -34,8 +34,8 @@ classdef MpcControl_roll < MpcControlBase
             
             % SET THE PROBLEM CONSTRAINTS con AND THE OBJECTIVE obj HERE
             % parameters
-            R = 0.2 * eye(nu);
-            Q = diag([3 3]);
+            R = eye(nu);
+            Q = eye(nx);
             
             % input constraints
             m = [20 ; 20]; 
@@ -46,27 +46,45 @@ classdef MpcControl_roll < MpcControlBase
             F = [1 0; 0 1;-1 0; 0 -1];
             
             % LQR controller on unconstrained system
-            [K,Qf,CLP] = dlqr(mpc.A,mpc.B,Q,R);
+            [K,Qf,CLP] = dlqr(mpc.A, mpc.B, Q, R);
             K = -K;
 
             % max invariant set
-            Xf = polytope([F; K*M], [f,m]);
+            Xf = polytope([F; M*K], [f;m]);
             acl = [mpc.A + mpc.B * K];
             
-            while True
+            while true
                 previous_Xf = Xf;
                 [T, t] = double(Xf);
                 pre_Xf = polytope(T * acl, t);
                 Xf = intersect(Xf, pre_Xf);
                 
-                if isequal
+                if isequal(Xf, previous_Xf)
+                    break
+                end
+
+            end
+
+            [Ff,ff] = double(Xf);
+
+            figure(11);            
+            plot(Xf);
+            title('System Roll Terminal Invariant Set');
+            xlabel('State w_z [deg\cdot s^2]');
+            ylabel('State \gamma [deg]');
+            
+            % Yalmip optimization
+            con = (X(:,2) == mpc.A * X(:,1) + mpc.B * U(:,1)) + (M * U(:,1) <= m);
+            obj = U(:,1)' * R * U(:,1);
+            
+            for i = 2:N-1
+                con = con + (X(:,i+1) == mpc.A * X(:,i) + mpc.B*U(:,i));
+                con = con + (F * X(:,i) <= f) + (M * U(:,i) <= m);
+                obj = obj + X(:,i)' * Q * X(:,i) + U(:,i)' * R * U(:,i);
             end
             
-            
-            
-            
-            obj = 0;
-            con = [];
+            obj = obj + X(:,N)' * Qf * X(:,N);
+            con = con + (Ff * X(:,N) <= ff);
             
             % YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -100,6 +118,28 @@ classdef MpcControl_roll < MpcControlBase
             % You can use the matrices mpc.A, mpc.B, mpc.C and mpc.D
             obj = 0;
             con = [xs == 0, us == 0];
+            Rs = 1;
+
+
+            % input constraints
+            m = [20 ; 20]; 
+            M = [1;-1];
+            
+            % state constraints
+            f = [inf; inf; inf; inf];
+            F = [1 0; 0 1;-1 0; 0 -1];
+
+            % definition of the function we want to optimize
+            obj = us' * Rs * us;
+            con = [(eye(nx) - mpc.A) -mpc.B; mpc.C  0] * [xs ;us] ...
+                    ==  [zeros(nx,1); ref];
+            
+            % TODO: i don't get this line
+            con = con + (F * xs <= f) + (M * us <= m);
+
+
+
+
             
             % YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
