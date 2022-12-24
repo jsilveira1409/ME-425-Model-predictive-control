@@ -36,13 +36,11 @@ classdef MpcControl_x < MpcControlBase
             
             % hyperparameters
             % TODO: comment determiner le facteur devant?
-            Q = 1 * eye(nx);
+            Q = 10 * eye(nx);
             R = 1 * eye(nu);
 
             % state constraints 
-            % TODO: pourquoi 4 dimensions? il y en a pas 12 states en total?
-            % combien ne sont pas liés à x?Est-ce qu'on les omets?
-
+          
             F = [1  0  0  0;
                  0  1  0  0;
                  0  0  1  0;
@@ -52,13 +50,11 @@ classdef MpcControl_x < MpcControlBase
                  0  0 -1  0;
                  0  0  0 -1];
 
-            % TODO: pourquoi pas mettre aussi la contrainte sur Pavg ?
             f = [inf; deg2rad(7); inf; inf; 
                  inf; deg2rad(7); inf; inf];
 
             % input constraints
-            % TODO : j'imagine que c'est seulement une entrée :  delta1, mais
-            % pouruqoi?
+           
             M = [1; -1];
             m = [deg2rad(15); deg2rad(15)];
 
@@ -83,38 +79,19 @@ classdef MpcControl_x < MpcControlBase
             end
             [Ff,ff] = double(Xf);
             
-            % plot data projections
-            figure(1)
-            Xf.projection(1:2).plot();
-            title('System x Terminal Invariant Set - Projection (1:2)');
-            xlabel('State w_y [rad/s]');
-            ylabel('State \beta [rad]');
-
-            figure(2)            
-            Xf.projection(2:3).plot();
-            title('System x Terminal Invariant Set - Projection (2:3)');
-            xlabel('State \beta [rad]');
-            ylabel('State v_x [m/s]');
-
-            figure(3)
-            Xf.projection(3:4).plot();
-            title('System x Terminal Invariant Set - Projection (3:4)');
-            xlabel('State v_x [m/s]');
-            ylabel('State x [m]');
-            
             % yalmip optimization
 
-            con = (X(:,2) == mpc.A*X(:,1) + mpc.B*U(:,1)) + (M*U(:,1) <= m);
-            obj = U(:,1)'*R*U(:,1);
-
+            con = (X(:,2) == mpc.A * X(:,1) + mpc.B*U(:,1)) + (M*U(:,1) <= m);
+            obj = (U(:,1)-u_ref)' * R * (U(:,1)-u_ref);
+            
             for i = 2:N-1
                 con = con + (X(:,i+1) == mpc.A*X(:,i) + mpc.B*U(:,i));
                 con = con + (F*X(:,i) <= f) + (M*U(:,i) <= m);
-                obj = obj + X(:,i)'*Q*X(:,i) + U(:,i)'*R*U(:,i);
+                obj = obj + (X(:,i)-x_ref)'*Q*(X(:,i)-x_ref) + (U(:,i)-u_ref)'*R*(U(:,i)-u_ref);
             end
-
+            
             con = con + (Ff*X(:,N) <= ff);
-            obj = obj + X(:,N)'*Qf*X(:,N);
+            obj = obj + (X(:,N)-x_ref)'*Qf*(X(:,N)-x_ref);
             
             
             % YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE

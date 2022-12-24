@@ -35,8 +35,13 @@ classdef MpcControl_y < MpcControlBase
             % SET THE PROBLEM CONSTRAINTS con AND THE OBJECTIVE obj HERE
             
             % hyperparameters
-            Q = 1 * eye(nx);
-            R = 1 * eye(nu);
+            
+            Q = [10  0  0  0;
+                 0  1  0  0;
+                 0  0  5  0;
+                 0  0  0  10];
+
+            R = 0.1 * eye(nu);
 
             % state constraints
 
@@ -76,11 +81,10 @@ classdef MpcControl_y < MpcControlBase
                end
             end
             [Ff,ff] = double(Xf);
-          
-            % yalmip optimization
-
-            con = (X(:,2) == mpc.A * X(:,1) + mpc.B*U(:,1)) + (M*U(:,1) <= m);
-            obj = (U(:,1)-u_ref)' * R * (U(:,1)-u_ref);
+            
+            
+            con = (X(:,2) == mpc.A*X(:,1) + mpc.B*U(:,1)) + (M*U(:,1) <= m);
+            obj = (U(:,1)-u_ref)'*R*(U(:,1)-u_ref);
             
             for i = 2:N-1
                 con = con + (X(:,i+1) == mpc.A*X(:,i) + mpc.B*U(:,i));
@@ -89,7 +93,8 @@ classdef MpcControl_y < MpcControlBase
             end
             
             con = con + (Ff*X(:,N) <= ff);
-            obj = obj + (X(:,N)-x_ref)'*Qf*(X(:,N)-x_ref);            
+            obj = obj + (X(:,N)-x_ref)'*Qf*(X(:,N)-x_ref);
+            
             
             
             % YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE
