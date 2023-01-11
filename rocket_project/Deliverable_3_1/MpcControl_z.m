@@ -49,7 +49,7 @@ classdef MpcControl_z < MpcControlBase
             % SET THE PROBLEM CONSTRAINTS con AND THE OBJECTIVE obj HERE
             
             % hyperparameters
-            Q = 1 * eye(nx);
+            Q = diag([3 2]);
             R = 1 * eye(nu);
 
             % no state constraint
@@ -59,7 +59,7 @@ classdef MpcControl_z < MpcControlBase
             % input constraint
             M = [1; -1];
             % the 56.6667 comes from the fact that we trimmed the system.
-            m = [(80 ); (50)];
+            m = [(80 - 56.6667); -(50 - 56.6667)];
 
             % unconstrained system LQR controller
             [K, Qf, ~] = dlqr(mpc.A, mpc.B, Q, R);

@@ -36,11 +36,10 @@ classdef MpcControl_y < MpcControlBase
             
             % hyperparameters
             
-            Q = [10  0  0  0;
-                 0  1  0  0;
-                 0  0  5  0;
-                 0  0  0  10];
-
+           Q = [10  0  0  0;
+                0  1  0  0;
+                0  0  3  0;
+                0  0  0  20];
             R = 0.1 * eye(nu);
 
             % state constraints

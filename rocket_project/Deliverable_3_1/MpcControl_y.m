@@ -35,8 +35,9 @@ classdef MpcControl_y < MpcControlBase
             % SET THE PROBLEM CONSTRAINTS con AND THE OBJECTIVE obj HERE
             
             % hyperparameters
-            Q = 1 * eye(nx);
+            Q = 1 * diag([3 1 3 1]);
             R = 1 * eye(nu);
+
 
             % state constraints
 

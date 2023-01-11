@@ -35,7 +35,7 @@ classdef MpcControl_roll < MpcControlBase
             % SET THE PROBLEM CONSTRAINTS con AND THE OBJECTIVE obj HERE
             % parameters
             R = eye(nu);
-            Q = eye(nx);
+            Q = diag([3 2]);
             
             % input constraints
             m = [20 ; 20]; 

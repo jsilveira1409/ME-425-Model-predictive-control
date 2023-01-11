@@ -36,7 +36,7 @@ classdef MpcControl_x < MpcControlBase
             
             % hyperparameters
             % TODO: comment determiner le facteur devant?
-            Q = 1 * eye(nx);
+            Q = 1 * diag([3 1 3 1]);
             R = 1 * eye(nu);
 
             % state constraints 

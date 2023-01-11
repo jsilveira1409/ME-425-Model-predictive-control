@@ -49,10 +49,9 @@ classdef MpcControl_z < MpcControlBase
             % SET THE PROBLEM CONSTRAINTS con AND THE OBJECTIVE obj HERE
             
             % hyperparameters
-            Q = [4  0;
+            Q = [30   0;
                  0  50];
-            R = 0.01 * eye(nu);
-
+            R = 0.1 * eye(nu);
 
             % no state constraint
             F = [1 0 ; 0 1 ;-1 0 ; 0 -1 ];
@@ -94,7 +93,7 @@ classdef MpcControl_z < MpcControlBase
             end
             
             con = con + (Ff*X(:,N) <= ff);
-            %obj = obj + (X(:,N)-x_ref)'*Qf*(X(:,N)-x_ref);
+            obj = obj + (X(:,N) - x_ref)' * Qf * (X(:,N) - x_ref);
             
             % YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -142,7 +141,7 @@ classdef MpcControl_z < MpcControlBase
             
             % input constraint
             M = [1; -1];
-            % the 56.6667 comes from the fact that we trimmed the system.
+            % TODO check this : the 56.6667 comes from the fact that we trimmed the system.
             m = [(80 ); (50)];
 
             % definition of the function we want to optimize

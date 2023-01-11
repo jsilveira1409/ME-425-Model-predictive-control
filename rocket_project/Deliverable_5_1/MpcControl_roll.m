@@ -34,10 +34,9 @@ classdef MpcControl_roll < MpcControlBase
             
             % SET THE PROBLEM CONSTRAINTS con AND THE OBJECTIVE obj HERE
             % parameters
-            R = 0.1 * eye(nu);
-            Q = [15  0;
-                 0  35];
-            
+            R = 0.01 * eye(nu);
+            Q = [5  0; 0  50];
+          
             % input constraints
             m = [20 ; 20]; 
             M = [1;-1];

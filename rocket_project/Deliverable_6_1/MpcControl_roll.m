@@ -1,4 +1,4 @@
-classdef MpcControl_x < MpcControlBase
+classdef MpcControl_roll < MpcControlBase
     
     methods
         % Design a YALMIP optimizer object that takes a steady-state state
@@ -11,14 +11,14 @@ classdef MpcControl_x < MpcControlBase
             %   x_ref, u_ref - reference state/input
             % OUTPUTS
             %   U(:,1)       - input to apply to the system
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
             N_segs = ceil(H/Ts); % Horizon steps
             N = N_segs + 1;      % Last index in 1-based Matlab indexing
-
+            
             [nx, nu] = size(mpc.B);
             
-            % Targets (Ignore this before Todo 3.2)
+            % Steady-state targets (Ignore this before Todo 3.2)
             x_ref = sdpvar(nx, 1);
             u_ref = sdpvar(nu, 1);
             
@@ -31,58 +31,43 @@ classdef MpcControl_x < MpcControlBase
             
             % NOTE: The matrices mpc.A, mpc.B, mpc.C and mpc.D are
             %       the DISCRETE-TIME MODEL of your system
-    
+            
             % SET THE PROBLEM CONSTRAINTS con AND THE OBJECTIVE obj HERE
+            % parameters
+            R = 0.01 * eye(nu);
+            Q = [5  0; 0  50];
             
-            % hyperparameters
-            % TODO: comment determiner le facteur devant?
-            Q = 1 * diag([3 1 3 1]);
-            R = 1 * eye(nu);
-
-            % state constraints 
-          
-            F = [1  0  0  0;
-                 0  1  0  0;
-                 0  0  1  0;
-                 0  0  0  1;
-                -1  0  0  0;
-                 0 -1  0  0;
-                 0  0 -1  0;
-                 0  0  0 -1];
-
-            f = [inf; deg2rad(7); inf; inf; 
-                 inf; deg2rad(7); inf; inf];
-
             % input constraints
-           
-            M = [1; -1];
-            m = [deg2rad(15); deg2rad(15)];
-
-            % unconstrained system LQR controller
-            [K, Qf, ~] = dlqr(mpc.A, mpc.B, Q, R);
+            m = [20 ; 20]; 
+            M = [1;-1];
+            
+            % state constraints
+            f = [inf; deg2rad(55); inf; deg2rad(55)];
+            F = [1 0; 0 1;-1 0; 0 -1];
+            
+            % LQR controller on unconstrained system
+            [K,Qf,CLP] = dlqr(mpc.A, mpc.B, Q, R);
             K = -K;
+
+            % max invariant set
+            Xf = polytope([F; M*K], [f;m]);
+            acl = [mpc.A + mpc.B * K];
             
-            % maximal invariant set
-            Xf = polytope([F; M*K],[f; m]);
-            
-            
-            Acl = [mpc.A + mpc.B * K];
-            
-            while 1
-               prevXf = Xf;
-               [T,t] = double(Xf);
-               preXf = polytope(T*Acl, t);
-               Xf = intersect(Xf, preXf);
-               if isequal(prevXf, Xf)
-                   break
-               end
+            while true
+                previous_Xf = Xf;
+                [T, t] = double(Xf);
+                pre_Xf = polytope(T * acl, t);
+                Xf = intersect(Xf, pre_Xf);
+                
+                if isequal(Xf, previous_Xf)
+                    break
+                end
+
             end
             [Ff,ff] = double(Xf);
             
-            % yalmip optimization
-
-            con = (X(:,2) == mpc.A * X(:,1) + mpc.B*U(:,1)) + (M*U(:,1) <= m);
-            obj = (U(:,1)-u_ref)' * R * (U(:,1)-u_ref);
+            con = (X(:,2) == mpc.A*X(:,1) + mpc.B*U(:,1)) + (M*U(:,1) <= m);
+            obj = (U(:,1)-u_ref)'*R*(U(:,1)-u_ref);
             
             for i = 2:N-1
                 con = con + (X(:,i+1) == mpc.A*X(:,i) + mpc.B*U(:,i));
@@ -92,7 +77,6 @@ classdef MpcControl_x < MpcControlBase
             
             con = con + (Ff*X(:,N) <= ff);
             obj = obj + (X(:,N)-x_ref)'*Qf*(X(:,N)-x_ref);
-            
             
             % YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -113,9 +97,8 @@ classdef MpcControl_x < MpcControlBase
             %   xs, us - steady-state target
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
-            nx = size(mpc.A, 1);
-
             % Steady-state targets
+            nx = size(mpc.A, 1);
             xs = sdpvar(nx, 1);
             us = sdpvar;
             
@@ -127,24 +110,16 @@ classdef MpcControl_x < MpcControlBase
             % You can use the matrices mpc.A, mpc.B, mpc.C and mpc.D
             obj = 0;
             con = [xs == 0, us == 0];
-            % TODO: calibrate Rs
             Rs = 1;
-    
-            % Contraints on the steady-state input target
-            m = [deg2rad(15); deg2rad(15)];
-            M = [1; -1];
 
-            % Constraints on the steady-state target    
-            % TODO: same as before right?
-            f = [inf; deg2rad(7); inf; inf; inf; deg2rad(7); inf; inf];
-            F = [1  0  0  0;
-                 0  1  0  0;
-                 0  0  1  0;
-                 0  0  0  1;
-                -1  0  0  0;
-                 0 -1  0  0;
-                 0  0 -1  0;
-                 0  0  0 -1];
+
+            % input constraints
+            m = [20 ; 20]; 
+            M = [1;-1];
+            
+            % state constraints
+            f = [inf; deg2rad(45); inf; deg2rad(45)];
+            F = [1 0; 0 1;-1 0; 0 -1];
 
             % definition of the function we want to optimize
             obj = us' * Rs * us;
@@ -153,8 +128,7 @@ classdef MpcControl_x < MpcControlBase
             
             % TODO: i don't get this line
             con = con + (F * xs <= f) + (M * us <= m);
-
-
+            
             % YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
