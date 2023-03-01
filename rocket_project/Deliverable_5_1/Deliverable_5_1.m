@@ -25,18 +25,18 @@ mpc = rocket.merge_lin_controllers(xs, us, mpc_x, mpc_y, mpc_z, mpc_roll);
 rocket.anim_rate = 3;
 %% Original System, no mass change(as in part 4)
 [T1, X1, U1, Ref1] = rocket.simulate(x0, Tf, @mpc.get_u, ref);
-ph = rocket.plotvis(T1, X1, U1, Ref1);
+%ph = rocket.plotvis(T1, X1, U1, Ref1);
 ph.fig.Name = 'Merged lineare MPC in nonlinear simulation without mass'
 
 %% Original System with mass change
 rocket.mass = 1.794;
 [T2, X2, U2, Ref2] = rocket.simulate(x0, Tf, @mpc.get_u, ref);
-ph = rocket.plotvis(T2, X2, U2, Ref2);
+%ph = rocket.plotvis(T2, X2, U2, Ref2);
 ph.fig.Name = 'Merged lineare MPC in nonlinear simulation with disturbance'
 
 %% Original System with Estimator, and mass change
 [T3, X3, U3, Ref3, Z_hat] = rocket.simulate_est_z(x0, Tf, @mpc.get_u, ref, mpc_z, sys_z);
-ph = rocket.plotvis(T3, X3, U3, Ref3);
+%ph = rocket.plotvis(T3, X3, U3, Ref3);
 ph.fig.Name = 'Merged lin. MPC in nonlinear simulation, trajectory with disturbance and offset-free tracking';
 
 

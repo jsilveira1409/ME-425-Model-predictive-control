@@ -95,7 +95,7 @@ classdef NmpcControl < handle
             eq_constr = [ ; ];
             ineq_constr = [;];
             % constraint bounds
-            beta_max = deg2rad(85);
+            beta_max = deg2rad(80);
             d1_max = deg2rad(15);    %CHECK SHOULD BE RAD
             d2_max = deg2rad(15);
             Pavg_min = 50;

@@ -42,7 +42,7 @@ mpc = rocket.merge_lin_controllers(xs, us, mpc_x, mpc_y, mpc_z, mpc_roll);
 roll_max = deg2rad(50);
 ref = @(t_, x_) ref_EPFL(t_, roll_max);
 [T, X, U, Ref] = rocket.simulate(x0, Tf, @mpc.get_u, ref);
-rocket.anim_rate = 3; -
+rocket.anim_rate = 3; 
 ph = rocket.plotvis(T, X, U, Ref);
 ph.fig.Name = 'Merged lin. MPC in nonlinear simulation with gamma to 50°'; 
 
